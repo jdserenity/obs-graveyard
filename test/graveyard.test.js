@@ -4,6 +4,8 @@ const {
 	isGraveyardPage,
 	countGraveyardTasks,
 	calculateActiveProgress,
+	calculateActiveProgressFromContent,
+	countGraveyardTasksFromContent,
 	isGraveyardHeadingLine,
 } = require("../src/graveyard.js");
 
@@ -60,4 +62,23 @@ test("calculateActiveProgress counts only live tasks above Graveyard", () => {
 
 test("calculateActiveProgress returns null without Graveyard heading", () => {
 	assert.equal(calculateActiveProgress({ headings: [], listItems: [] }), null);
+});
+
+test("calculateActiveProgressFromContent parses editor text immediately", () => {
+	const content = [
+		"- [ ] one",
+		"- [x] two",
+		"###### Graveyard:",
+		"- [x] buried",
+	].join("\n");
+
+	assert.deepEqual(calculateActiveProgressFromContent(content), {
+		open: 1,
+		done: 1,
+		total: 2,
+		completed: 1,
+		percentage: 50,
+		generatedAt: calculateActiveProgressFromContent(content).generatedAt,
+	});
+	assert.deepEqual(countGraveyardTasksFromContent(content), { headingLine: 2, count: 1 });
 });

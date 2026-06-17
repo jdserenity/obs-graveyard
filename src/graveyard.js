@@ -67,11 +67,62 @@ function clampPercentage(value) {
 	return value;
 }
 
+const TASK_LINE = /^(\s*)[-*+]\s+\[([ xX])\]/;
+
+function findGraveyardLineInLines(lines) {
+	for (let i = 0; i < lines.length; i++) {
+		if (isGraveyardHeadingLine(lines[i])) return i;
+	}
+	return -1;
+}
+
+function isGraveyardPageContent(content) {
+	return findGraveyardLineInLines(content.split("\n")) >= 0;
+}
+
+function calculateActiveProgressFromContent(content, timestamp = Date.now()) {
+	const lines = content.split("\n");
+	const graveyardLine = findGraveyardLineInLines(lines);
+	if (graveyardLine < 0) return null;
+
+	let open = 0;
+	let done = 0;
+	for (let i = 0; i < graveyardLine; i++) {
+		const match = lines[i].match(TASK_LINE);
+		if (!match) continue;
+		if (match[2] === " ") open += 1;
+		else if (match[2].toLowerCase() === "x") done += 1;
+	}
+
+	const total = open + done;
+	if (total === 0) return null;
+
+	const percentage = clampPercentage(Math.round((done / total) * 100));
+	return { open, done, total, completed: done, percentage, generatedAt: timestamp };
+}
+
+function countGraveyardTasksFromContent(content) {
+	const lines = content.split("\n");
+	const graveyardLine = findGraveyardLineInLines(lines);
+	if (graveyardLine < 0) return null;
+
+	let count = 0;
+	for (let i = graveyardLine + 1; i < lines.length; i++) {
+		const match = lines[i].match(TASK_LINE);
+		if (match && match[2].toLowerCase() === "x") count += 1;
+	}
+
+	return { headingLine: graveyardLine, count };
+}
+
 module.exports = {
 	isGraveyardHeading,
 	isGraveyardHeadingLine,
 	findGraveyardHeading,
 	isGraveyardPage,
+	isGraveyardPageContent,
 	countGraveyardTasks,
+	countGraveyardTasksFromContent,
 	calculateActiveProgress,
+	calculateActiveProgressFromContent,
 };
