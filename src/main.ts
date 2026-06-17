@@ -9,12 +9,26 @@ import {
 
 export default class GraveyardPlugin extends Plugin {
 	controller: ProgressController | null = null;
+	private editorRefreshRaf = 0;
 
 	onload(): void {
 		setGraveyardPlugin(this);
 		this.registerEditorExtension(graveyardEditorExtension);
 		this.controller = new ProgressController(this.app);
 		this.controller.start();
+
+		this.registerEvent(
+			this.app.workspace.on("editor-change", (editor, ctx) => {
+				const file = ctx.file ?? this.app.workspace.getActiveFile();
+				if (!file) return;
+				cancelAnimationFrame(this.editorRefreshRaf);
+				this.editorRefreshRaf = requestAnimationFrame(() => {
+					const content = editor.getValue();
+					this.controller?.refreshFromContent(content);
+					this.refreshFileEditors(file);
+				});
+			}),
+		);
 
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (file: TFile) => {
@@ -33,6 +47,7 @@ export default class GraveyardPlugin extends Plugin {
 	}
 
 	onunload(): void {
+		cancelAnimationFrame(this.editorRefreshRaf);
 		this.controller?.stop();
 		this.controller = null;
 		setGraveyardPlugin(null);

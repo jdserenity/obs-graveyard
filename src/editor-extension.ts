@@ -8,7 +8,7 @@ import {
 } from "@codemirror/view";
 import { RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
 import { editorInfoField } from "obsidian";
-import { countGraveyardTasks, isGraveyardHeadingLine } from "./graveyard.js";
+import { countGraveyardTasksFromContent, isGraveyardHeadingLine } from "./graveyard.js";
 import type GraveyardPlugin from "./main";
 
 class GraveyardCountWidget extends WidgetType {
@@ -23,7 +23,7 @@ class GraveyardCountWidget extends WidgetType {
 	toDOM(): HTMLElement {
 		const span = document.createElement("span");
 		span.className = "graveyard-counter-badge";
-		span.textContent = ` (${this.count} ✅)`;
+		span.textContent = ` ${this.count} 🪦 🏆`;
 		return span;
 	}
 }
@@ -52,8 +52,7 @@ function buildDecorations(view: EditorView): DecorationSet {
 	const file = info?.file;
 	if (!file || !plugin) return builder.finish();
 
-	const cache = plugin.app.metadataCache.getFileCache(file) ?? null;
-	const result = countGraveyardTasks(cache);
+	const result = countGraveyardTasksFromContent(view.state.doc.toString());
 	if (!result) return builder.finish();
 
 	const lineNumber = result.headingLine + 1;

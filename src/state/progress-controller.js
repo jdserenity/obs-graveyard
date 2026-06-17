@@ -1,5 +1,6 @@
 const { ProgressBar } = require("../ui/progress-bar");
 const { NoteWatcher } = require("./note-watcher");
+const { calculateActiveProgressFromContent } = require("../graveyard");
 
 class ProgressController {
 	constructor(app) {
@@ -12,6 +13,11 @@ class ProgressController {
 	start() { this.watcher.start(); }
 	stop() { this.watcher.stop(); this.bar.destroy(); }
 	refresh() { this.watcher.refresh(); }
+
+	refreshFromContent(content) {
+		const snapshot = calculateActiveProgressFromContent(content);
+		this.handleSnapshot(snapshot);
+	}
 
 	toggleBar() {
 		this.barEnabled = !this.barEnabled;
