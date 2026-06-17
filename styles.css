@@ -70,23 +70,9 @@
 
 .graveyard-angel__emoji {
 	position: relative;
-	z-index: 2;
 	font-size: 1em;
 	line-height: 1;
 	display: block;
-}
-
-.graveyard-angel__fire {
-	position: absolute;
-	left: 50%;
-	bottom: -0.12em;
-	transform: translateX(-50%);
-	z-index: 1;
-	font-size: 1.45em;
-	line-height: 1;
-	opacity: 0;
-	pointer-events: none;
-	user-select: none;
 }
 
 .graveyard-angel--full .graveyard-angel__emoji {

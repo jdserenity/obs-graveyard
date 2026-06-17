@@ -35,8 +35,6 @@ class ProgressBar {
 			});
 			const body = angel.createDiv({ cls: "graveyard-angel__body" });
 			body.style.transform = `scale(${state.scale})`;
-			const fire = body.createSpan({ cls: "graveyard-angel__fire", text: "🔥" });
-			fire.style.opacity = String(state.fireOpacity);
 			body.createSpan({ cls: "graveyard-angel__emoji", text: "😇" });
 		}
 	}

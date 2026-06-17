@@ -2,13 +2,6 @@ const TASKS_PER_ANGEL = 5;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 1;
 
-function getFireOpacity(doneInBucket, bucketSize) {
-	if (doneInBucket >= bucketSize) return 0.75;
-	if (bucketSize >= 5 && doneInBucket === 4) return 0.15;
-	if (bucketSize >= 2 && doneInBucket === bucketSize - 1) return 0.15;
-	return 0;
-}
-
 function getAngelStates(completed, total) {
 	if (total <= 0) return [];
 
@@ -26,11 +19,10 @@ function getAngelStates(completed, total) {
 			scale,
 			isFull: doneInBucket === bucketSize,
 			progress,
-			fireOpacity: getFireOpacity(doneInBucket, bucketSize),
 		});
 	}
 
 	return states;
 }
 
-module.exports = { TASKS_PER_ANGEL, MIN_SCALE, MAX_SCALE, getFireOpacity, getAngelStates };
+module.exports = { TASKS_PER_ANGEL, MIN_SCALE, MAX_SCALE, getAngelStates };
