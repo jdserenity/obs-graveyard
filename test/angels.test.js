@@ -25,7 +25,7 @@ test("angel scales up with partial bucket progress", () => {
 test("fire opacity ramps on 4th and 5th task in a bucket of 5", () => {
   assert.equal(getAngelStates(3, 25)[0].fireOpacity, 0);
   assert.equal(getAngelStates(4, 25)[0].fireOpacity, 0.15);
-  assert.equal(getAngelStates(5, 25)[0].fireOpacity, 0.3);
+  assert.equal(getAngelStates(5, 25)[0].fireOpacity, 0.75);
 });
 
 test("full bucket gives max scale, glow, and fire flag", () => {

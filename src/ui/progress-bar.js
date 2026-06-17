@@ -33,10 +33,11 @@ class ProgressBar {
 			const angel = this.angelsEl.createDiv({
 				cls: `graveyard-angel${state.isFull ? " graveyard-angel--full" : ""}`,
 			});
-			angel.style.transform = `scale(${state.scale})`;
-			const fire = angel.createSpan({ cls: "graveyard-angel__fire", text: "🔥" });
+			const body = angel.createDiv({ cls: "graveyard-angel__body" });
+			body.style.transform = `scale(${state.scale})`;
+			const fire = body.createSpan({ cls: "graveyard-angel__fire", text: "🔥" });
 			fire.style.opacity = String(state.fireOpacity);
-			angel.createSpan({ cls: "graveyard-angel__emoji", text: "😇" });
+			body.createSpan({ cls: "graveyard-angel__emoji", text: "😇" });
 		}
 	}
 

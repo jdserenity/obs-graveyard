@@ -3,7 +3,7 @@ const MIN_SCALE = 0.5;
 const MAX_SCALE = 1;
 
 function getFireOpacity(doneInBucket, bucketSize) {
-	if (doneInBucket >= bucketSize) return 0.3;
+	if (doneInBucket >= bucketSize) return 0.75;
 	if (bucketSize >= 5 && doneInBucket === 4) return 0.15;
 	if (bucketSize >= 2 && doneInBucket === bucketSize - 1) return 0.15;
 	return 0;

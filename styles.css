@@ -44,20 +44,28 @@
 	gap: 2px;
 	flex-shrink: 0;
 	line-height: 1;
-	transform: translateY(0.1em);
 	overflow: visible;
 }
 
 .graveyard-angel {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1.3em;
+	height: 1.3em;
+	overflow: visible;
+}
+
+.graveyard-angel__body {
 	position: relative;
 	display: inline-flex;
-	align-items: flex-end;
+	align-items: center;
 	justify-content: center;
-	transform-origin: center bottom;
+	transform-origin: center center;
+	width: 1em;
+	height: 1em;
 	line-height: 1;
-	width: 1.25em;
-	height: 1.2em;
-	overflow: visible;
 }
 
 .graveyard-angel__emoji {
@@ -71,7 +79,7 @@
 .graveyard-angel__fire {
 	position: absolute;
 	left: 50%;
-	bottom: 0;
+	bottom: -0.12em;
 	transform: translateX(-50%);
 	z-index: 1;
 	font-size: 1.45em;
