@@ -1,0 +1,9 @@
+{
+	"id": "graveyard",
+	"name": "Graveyard",
+	"version": "1.0.0",
+	"minAppVersion": "1.5.0",
+	"description": "Progress bar for live tasks and a graveyard count on ###### Graveyard: project notes.",
+	"author": "jd",
+	"isDesktopOnly": false
+}
