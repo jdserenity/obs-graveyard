@@ -1,4 +1,6 @@
 const { MarkdownView } = require("obsidian");
+const { getAngelStates } = require("./angels");
+const { fireCelebration } = require("./confetti");
 
 class ProgressBar {
 	constructor(app) {
@@ -6,17 +8,48 @@ class ProgressBar {
 		this.root = this.createRoot();
 		const summary = this.root.querySelector(".graveyard-progress-bar__summary");
 		this.summaryText = summary.querySelector(".graveyard-progress-bar__summary-text");
-		this.percentageText = summary.querySelector(".graveyard-progress-bar__summary-percentage");
+		this.angelsEl = summary.querySelector(".graveyard-progress-bar__angels");
+		this.percentageText = summary.querySelector(".graveyard-progress-bar__percentage");
 		this.progressEl = this.root.querySelector(".graveyard-progress-bar__progress");
+		this.lastCelebratedKey = null;
 	}
 
 	show(snapshot) {
 		if (!this.ensureMounted()) return;
-		this.summaryText.setText(`${snapshot.completed} of ${snapshot.total}`);
-		this.percentageText.setText(`${snapshot.percentage}%`);
-		this.progressEl.value = snapshot.percentage;
-		this.progressEl.title = `${snapshot.percentage}%`;
-		this.root.setAttr("aria-label", this.summaryText.textContent ?? "");
+
+		const { completed, total, percentage } = snapshot;
+		this.summaryText.setText(`${completed} of ${total} alive tasks`);
+		this.percentageText.setText(`${percentage}%`);
+		this.progressEl.value = percentage;
+		this.progressEl.removeAttribute("title");
+		this.renderAngels(completed, total);
+		this.maybeCelebrate(completed, total);
+		this.root.setAttr("aria-label", `${completed} of ${total} alive tasks complete`);
+	}
+
+	renderAngels(completed, total) {
+		this.angelsEl.empty();
+		for (const state of getAngelStates(completed, total)) {
+			const angel = this.angelsEl.createDiv({
+				cls: `graveyard-angel${state.isFull ? " graveyard-angel--full" : ""}`,
+			});
+			angel.style.transform = `scale(${state.scale})`;
+			const fire = angel.createSpan({ cls: "graveyard-angel__fire", text: "🔥" });
+			fire.style.opacity = String(state.fireOpacity);
+			angel.createSpan({ cls: "graveyard-angel__emoji", text: "😇" });
+		}
+	}
+
+	maybeCelebrate(completed, total) {
+		if (total > 0 && completed === total) {
+			const key = `${completed}/${total}`;
+			if (this.lastCelebratedKey !== key) {
+				this.lastCelebratedKey = key;
+				fireCelebration();
+			}
+			return;
+		}
+		this.lastCelebratedKey = null;
 	}
 
 	hide() {
@@ -50,11 +83,15 @@ class ProgressBar {
 		root.setAttr("aria-live", "polite");
 
 		const summary = root.createDiv({ cls: "graveyard-progress-bar__summary" });
-		summary.createSpan({ cls: "graveyard-progress-bar__summary-text" }).setText("0 of 0");
-		summary.createSpan({ cls: "graveyard-progress-bar__summary-percentage" }).setText("0%");
+		const live = summary.createDiv({ cls: "graveyard-progress-bar__live" });
+		live.createSpan({ cls: "graveyard-progress-bar__summary-text" }).setText("0 of 0 alive tasks");
+		live.createDiv({ cls: "graveyard-progress-bar__angels" });
+		summary.createSpan({ cls: "graveyard-progress-bar__percentage", text: "0%" });
+
 		const progress = root.createEl("progress", { cls: "graveyard-progress-bar__progress" });
 		progress.max = 100;
 		progress.value = 0;
+		progress.removeAttribute("title");
 		return root;
 	}
 }
