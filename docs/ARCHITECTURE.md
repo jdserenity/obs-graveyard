@@ -1,11 +1,14 @@
 # Graveyard — Architecture
 
-Obsidian plugin **Graveyard** (`graveyard`). Activates on notes with `###### Graveyard:`.
+Obsidian plugin **Graveyard** (`graveyard`).
+
+- `###### Graveyard:` — progress bar minigame (alive tasks above the heading) + `n 🪦 🏆` badge on the heading.
+- `###### Done:` — `n ✅` badge on the heading only (checked tasks below); no progress bar or confetti.
 
 ## UI
 
-- **Progress bar**: `n of n alive tasks` + 😇 angels inline to the right, `n%` right-aligned, confetti at 100%.
-- **Graveyard badge**: `n 🪦 🏆` on the heading (no brackets).
+- **Progress bar** (Graveyard only): `n of n alive tasks` + 😇 angels inline to the right, `n%` right-aligned, confetti at 100%.
+- **Section badges** (no brackets): Graveyard `n 🪦 🏆`, Done `n ✅`.
 
 ## Confetti
 

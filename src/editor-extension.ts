@@ -8,22 +8,24 @@ import {
 } from "@codemirror/view";
 import { RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
 import { editorInfoField } from "obsidian";
-import { countGraveyardTasksFromContent, isGraveyardHeadingLine } from "./graveyard.js";
+import { countSectionTasksFromContent, sectionKindFromLine } from "./graveyard.js";
 import type GraveyardPlugin from "./main";
 
-class GraveyardCountWidget extends WidgetType {
-	constructor(private readonly count: number) {
+type SectionKind = "graveyard" | "done";
+
+class SectionCountWidget extends WidgetType {
+	constructor(private readonly count: number, private readonly kind: SectionKind) {
 		super();
 	}
 
-	eq(other: GraveyardCountWidget): boolean {
-		return other.count === this.count;
+	eq(other: SectionCountWidget): boolean {
+		return other.count === this.count && other.kind === this.kind;
 	}
 
 	toDOM(): HTMLElement {
 		const span = document.createElement("span");
 		span.className = "graveyard-counter-badge";
-		span.textContent = ` ${this.count} 🪦 🏆`;
+		span.textContent = this.kind === "graveyard" ? ` ${this.count} 🪦 🏆` : ` ${this.count} ✅`;
 		return span;
 	}
 }
@@ -52,23 +54,26 @@ function buildDecorations(view: EditorView): DecorationSet {
 	const file = info?.file;
 	if (!file || !plugin) return builder.finish();
 
-	const result = countGraveyardTasksFromContent(view.state.doc.toString());
-	if (!result) return builder.finish();
+	const sections = countSectionTasksFromContent(view.state.doc.toString());
+	if (!sections.length) return builder.finish();
 
-	const lineNumber = result.headingLine + 1;
-	if (lineNumber < 1 || lineNumber > view.state.doc.lines) return builder.finish();
+	for (const section of sections) {
+		const lineNumber = section.headingLine + 1;
+		if (lineNumber < 1 || lineNumber > view.state.doc.lines) continue;
 
-	const line = view.state.doc.line(lineNumber);
-	if (!isGraveyardHeadingLine(line.text)) return builder.finish();
+		const line = view.state.doc.line(lineNumber);
+		const kind = sectionKindFromLine(line.text);
+		if (!kind || kind !== section.kind) continue;
 
-	builder.add(
-		line.to,
-		line.to,
-		Decoration.widget({
-			widget: new GraveyardCountWidget(result.count),
-			side: 1,
-		}),
-	);
+		builder.add(
+			line.to,
+			line.to,
+			Decoration.widget({
+				widget: new SectionCountWidget(section.count, section.kind),
+				side: 1,
+			}),
+		);
+	}
 
 	return builder.finish();
 }

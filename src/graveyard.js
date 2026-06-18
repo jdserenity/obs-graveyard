@@ -1,16 +1,42 @@
 const GRAVEYARD_HEADING_PATTERN = /^graveyard:?\s*$/i;
+const DONE_HEADING_PATTERN = /^done:?\s*$/i;
 
 function isGraveyardHeading(heading) {
 	return heading.level === 6 && GRAVEYARD_HEADING_PATTERN.test(heading.heading.trim());
+}
+
+function isDoneHeading(heading) {
+	return heading.level === 6 && DONE_HEADING_PATTERN.test(heading.heading.trim());
 }
 
 function isGraveyardHeadingLine(lineText) {
 	return /^#{6}\s+graveyard:?\s*$/i.test(lineText.trim());
 }
 
+function isDoneHeadingLine(lineText) {
+	return /^#{6}\s+done:?\s*$/i.test(lineText.trim());
+}
+
+function sectionKindFromHeading(heading) {
+	if (isGraveyardHeading(heading)) return "graveyard";
+	if (isDoneHeading(heading)) return "done";
+	return null;
+}
+
+function sectionKindFromLine(lineText) {
+	if (isGraveyardHeadingLine(lineText)) return "graveyard";
+	if (isDoneHeadingLine(lineText)) return "done";
+	return null;
+}
+
 function findGraveyardHeading(headings) {
 	if (!headings?.length) return null;
 	return headings.find(isGraveyardHeading) ?? null;
+}
+
+function findDoneHeading(headings) {
+	if (!headings?.length) return null;
+	return headings.find(isDoneHeading) ?? null;
 }
 
 function isGraveyardPage(cache) {
@@ -25,17 +51,46 @@ function isOpenTask(item) {
 	return item.task === " ";
 }
 
+function countCheckedTasksBelowLine(lines, headingLine) {
+	let count = 0;
+	for (let i = headingLine + 1; i < lines.length; i++) {
+		if (sectionKindFromLine(lines[i])) break;
+		const match = lines[i].match(TASK_LINE);
+		if (match && match[2].toLowerCase() === "x") count += 1;
+	}
+	return count;
+}
+
+function countSectionTasks(cache) {
+	const sections = (cache?.headings ?? [])
+		.map((heading) => ({ heading, kind: sectionKindFromHeading(heading) }))
+		.filter((entry) => entry.kind)
+		.sort((a, b) => a.heading.position.start.line - b.heading.position.start.line);
+	if (!sections.length) return [];
+
+	return sections.map(({ heading, kind }, index) => {
+		const headingLine = heading.position.start.line;
+		const nextLine = sections[index + 1]?.heading.position.start.line ?? Number.POSITIVE_INFINITY;
+		const count = (cache.listItems ?? []).filter(
+			(item) => {
+				const line = item.position.start.line;
+				return line > headingLine && line < nextLine && isChecked(item);
+			},
+		).length;
+		return { headingLine, kind, count };
+	});
+}
+
 function countGraveyardTasks(cache) {
-	const heading = findGraveyardHeading(cache?.headings);
-	if (!heading) return null;
+	const section = countSectionTasks(cache).find((entry) => entry.kind === "graveyard");
+	if (!section) return null;
+	return { headingLine: section.headingLine, count: section.count };
+}
 
-	const graveyardLine = heading.position.start.line;
-	const count = (cache.listItems ?? []).filter(
-		(item) =>
-			item.position.start.line > graveyardLine && isChecked(item),
-	).length;
-
-	return { headingLine: graveyardLine, count };
+function countDoneTasks(cache) {
+	const section = countSectionTasks(cache).find((entry) => entry.kind === "done");
+	if (!section) return null;
+	return { headingLine: section.headingLine, count: section.count };
 }
 
 function calculateActiveProgress(cache, timestamp = Date.now()) {
@@ -69,6 +124,15 @@ function clampPercentage(value) {
 
 const TASK_LINE = /^(\s*)[-*+]\s+\[([ xX])\]/;
 
+function findSectionHeadingLines(lines) {
+	const results = [];
+	for (let i = 0; i < lines.length; i++) {
+		const kind = sectionKindFromLine(lines[i]);
+		if (kind) results.push({ headingLine: i, kind });
+	}
+	return results;
+}
+
 function findGraveyardLineInLines(lines) {
 	for (let i = 0; i < lines.length; i++) {
 		if (isGraveyardHeadingLine(lines[i])) return i;
@@ -101,27 +165,35 @@ function calculateActiveProgressFromContent(content, timestamp = Date.now()) {
 	return { open, done, total, completed: done, percentage, generatedAt: timestamp };
 }
 
-function countGraveyardTasksFromContent(content) {
+function countSectionTasksFromContent(content) {
 	const lines = content.split("\n");
-	const graveyardLine = findGraveyardLineInLines(lines);
-	if (graveyardLine < 0) return null;
+	return findSectionHeadingLines(lines).map(({ headingLine, kind }) => ({
+		headingLine,
+		kind,
+		count: countCheckedTasksBelowLine(lines, headingLine),
+	}));
+}
 
-	let count = 0;
-	for (let i = graveyardLine + 1; i < lines.length; i++) {
-		const match = lines[i].match(TASK_LINE);
-		if (match && match[2].toLowerCase() === "x") count += 1;
-	}
-
-	return { headingLine: graveyardLine, count };
+function countGraveyardTasksFromContent(content) {
+	const section = countSectionTasksFromContent(content).find((entry) => entry.kind === "graveyard");
+	if (!section) return null;
+	return { headingLine: section.headingLine, count: section.count };
 }
 
 module.exports = {
 	isGraveyardHeading,
+	isDoneHeading,
 	isGraveyardHeadingLine,
+	isDoneHeadingLine,
+	sectionKindFromLine,
 	findGraveyardHeading,
+	findDoneHeading,
 	isGraveyardPage,
 	isGraveyardPageContent,
+	countSectionTasks,
 	countGraveyardTasks,
+	countDoneTasks,
+	countSectionTasksFromContent,
 	countGraveyardTasksFromContent,
 	calculateActiveProgress,
 	calculateActiveProgressFromContent,
